@@ -17,3 +17,7 @@ This smart automation not only enhances user convenience and comfort, but
 also contributes to energy efficiency and home security. Real-time data 
 monitoring and control from anywhere make the system scalable and practical 
 for modern home environments.
+
+**Libraries Used:**
+ESP8266WiFi.h → For Wi-Fi connection.
+BlynkSimpleEsp8266.h → For Blynk IoT platform integration.
