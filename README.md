@@ -1,35 +1,35 @@
 # iot-smart-home-automation
-#define BLYNK_TEMPLATE_ID "TMPL35u8RrJBJ"
-#define BLYNK_TEMPLATE_NAME "final2"
-#define BLYNK_AUTH_TOKEN "q77QBX6SoF00ZwJh67XiCBeJb5xxh6i8"
+define BLYNK_TEMPLATE_ID "TMPL35u8RrJBJ"
+define BLYNK_TEMPLATE_NAME "final2"
+define BLYNK_AUTH_TOKEN "q77QBX6SoF00ZwJh67XiCBeJb5xxh6i8"
 
-#include <ESP8266WiFi.h>
-#include <BlynkSimpleEsp8266.h>
-#include <DHT.h>
+include <ESP8266WiFi.h>
+include <BlynkSimpleEsp8266.h>
+include <DHT.h>
 
 // WiFi credentials
 char ssid[] = "Aarif";
 char pass[] = "05220406";
 
 // Sensor Pins
-#define DHTPIN 14         // D5 = GPIO14
-#define DHTTYPE DHT11
-#define LDRPIN A0         // Analog pin A0
-#define IR1_PIN 12        // D6 = GPIO12 (used with DHT to glow LED1)
-#define IR2_PIN 2         // D4 = GPIO2 (used for notification + alarm)
+define DHTPIN 14         // D5 = GPIO14
+define DHTTYPE DHT11
+define LDRPIN A0         // Analog pin A0
+define IR1_PIN 12        // D6 = GPIO12 (used with DHT to glow LED1)
+define IR2_PIN 2         // D4 = GPIO2 (used for notification + alarm)
 
-#define LED1_PIN 4        // D2 = GPIO4 (DHT + IR1 control)
-#define LED2_PIN 5        // D1 = GPIO5 (LDR control)
+define LED1_PIN 4        // D2 = GPIO4 (DHT + IR1 control)
+define LED2_PIN 5        // D1 = GPIO5 (LDR control)
 
 // Virtual Pins
-#define VPIN_TEMP V4
-#define VPIN_HUM V5
-#define VPIN_LDR V6
-#define MANUAL1_PIN V0
-#define AUTO1_PIN V2
-#define MANUAL2_PIN V1
-#define AUTO2_PIN V3
-#define ALARM_VPIN V7
+define VPIN_TEMP V4
+define VPIN_HUM V5
+define VPIN_LDR V6
+define MANUAL1_PIN V0
+define AUTO1_PIN V2
+define MANUAL2_PIN V1
+define AUTO2_PIN V3
+define ALARM_VPIN V7
 
 DHT dht(DHTPIN, DHTTYPE);
 BlynkTimer timer;
