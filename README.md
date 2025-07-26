@@ -1,1 +1,154 @@
 # iot-smart-home-automation
+#define BLYNK_TEMPLATE_ID "TMPL35u8RrJBJ"
+#define BLYNK_TEMPLATE_NAME "final2"
+#define BLYNK_AUTH_TOKEN "q77QBX6SoF00ZwJh67XiCBeJb5xxh6i8"
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+#include <DHT.h>
+
+// WiFi credentials
+char ssid[] = "Aarif";
+char pass[] = "05220406";
+
+// Sensor Pins
+#define DHTPIN 14         // D5 = GPIO14
+#define DHTTYPE DHT11
+#define LDRPIN A0         // Analog pin A0
+#define IR1_PIN 12        // D6 = GPIO12 (used with DHT to glow LED1)
+#define IR2_PIN 2         // D4 = GPIO2 (used for notification + alarm)
+
+#define LED1_PIN 4        // D2 = GPIO4 (DHT + IR1 control)
+#define LED2_PIN 5        // D1 = GPIO5 (LDR control)
+
+// Virtual Pins
+#define VPIN_TEMP V4
+#define VPIN_HUM V5
+#define VPIN_LDR V6
+#define MANUAL1_PIN V0
+#define AUTO1_PIN V2
+#define MANUAL2_PIN V1
+#define AUTO2_PIN V3
+#define ALARM_VPIN V7
+
+DHT dht(DHTPIN, DHTTYPE);
+BlynkTimer timer;
+
+// Control flags
+bool manual1 = false;
+bool auto1 = true;
+bool manual2 = false;
+bool auto2 = true;
+
+int motionFlag = 0;  // To avoid repeated alerts from IR2
+
+// Blynk virtual pin write handlers
+BLYNK_WRITE(MANUAL1_PIN) { manual1 = param.asInt(); }
+BLYNK_WRITE(AUTO1_PIN)   { auto1   = param.asInt(); }
+BLYNK_WRITE(MANUAL2_PIN) { manual2 = param.asInt(); }
+BLYNK_WRITE(AUTO2_PIN)   { auto2   = param.asInt(); }
+
+// Sensor reading and device control
+void sendSensor() {
+  float temp = dht.readTemperature();
+  float hum = dht.readHumidity();
+  int ldrValue = analogRead(LDRPIN);
+  int ir1Motion = digitalRead(IR1_PIN);  // LOW = motion
+
+  // Send to Blynk
+  if (!isnan(temp) && !isnan(hum)) {
+    Blynk.virtualWrite(VPIN_TEMP, temp);
+    Blynk.virtualWrite(VPIN_HUM, hum);
+  }
+  Blynk.virtualWrite(VPIN_LDR, ldrValue);
+
+  // Debug print
+  Serial.print("🌡 Temp: "); Serial.print(temp);
+  Serial.print(" °C | 💧 Hum: "); Serial.print(hum);
+  Serial.print(" % | IR1: "); Serial.print(ir1Motion == LOW ? "Motion" : "No");
+  Serial.print(" | 💡 LDR: "); Serial.print(ldrValue);
+
+  // ---------- LED1 Control (DHT + IR1) ----------
+  bool led1State = false;
+
+  if (auto1) {
+    if (temp > 20.0 && ir1Motion == LOW) {
+      led1State = false;
+      Serial.print(" | 🔁 AUTO1: LED1 ON");
+    } else {
+       led1State = true;
+      Serial.print(" | 🔁 AUTO1: LED1 OFF");
+    }
+  }
+
+  if (manual1) {
+    led1State = !led1State;
+    Serial.print(" | ✋ MANUAL1 Override: LED1 ");
+    Serial.print(led1State ? "FORCED ON" : "FORCED OFF");
+  }
+
+  digitalWrite(LED1_PIN, led1State ? HIGH : LOW);
+
+  // ---------- LED2 Control (LDR) ----------
+  bool led2State = false;
+  int ldrThreshold = 500;
+
+  if (auto2) {
+    if (ldrValue < ldrThreshold) {
+      led2State = true;
+      Serial.print(" | 🔁 AUTO2: LED2 ON");
+    } else {
+      Serial.print(" | 🔁 AUTO2: LED2 OFF");
+    }
+  }
+
+  if (manual2) {
+    led2State = !led2State;
+    Serial.print(" | ✋ MANUAL2 Override: LED2 ");
+    Serial.print(led2State ? "FORCED ON" : "FORCED OFF");
+  }
+
+  digitalWrite(LED2_PIN, led2State ? HIGH : LOW);
+  Serial.println();
+}
+
+// Alert via IR2
+void notifyMotion() {
+  int motion = digitalRead(IR2_PIN);  // LOW = motion
+
+  if (motion == LOW && motionFlag == 0) {
+    Serial.println("🚨 IR2 Motion Detected!");
+    Blynk.virtualWrite(ALARM_VPIN, 1);
+    Blynk.logEvent("evaroo_vacharaa_babuu", "🚨 evaroo vacharuuu raa babbuuuu!");
+    motionFlag = 1;
+  } 
+  else if (motion == HIGH && motionFlag == 1) {
+    Serial.println("✅ IR2: No Motion.");
+    Blynk.virtualWrite(ALARM_VPIN, 0);
+    motionFlag = 0;
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+  dht.begin();
+
+  pinMode(IR1_PIN, INPUT);
+  pinMode(IR2_PIN, INPUT);
+  pinMode(LED1_PIN, OUTPUT);
+  pinMode(LED2_PIN, OUTPUT);
+
+  digitalWrite(LED1_PIN, LOW);
+  digitalWrite(LED2_PIN, LOW);
+
+  timer.setInterval(3000L, sendSensor);     // every 3 sec
+  timer.setInterval(1000L, notifyMotion);   // every 1 sec
+
+  Serial.println("🚀 System Ready: All sensors active.");
+}
+
+void loop() {
+  Blynk.run();
+  timer.run();
+}
